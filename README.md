@@ -2,8 +2,9 @@
 
 根据经纬度获取中国城市的天气（数据来源-中国天气网）
 
-##代码示例
+## 代码示例
 
+```
 // 查询城市
 Double longitude = 116.41;// 经度
 Double latitude = 39.9316;// 纬度
@@ -21,3 +22,4 @@ System.out.println("查询时间：" + (t2 - t1));
 System.out.println(WeatherSearcher.getWeatherFromHtml(longitude, latitude));
 double t3 = System.currentTimeMillis();
 System.out.println("查询时间：" + (t3 - t2));
+```
