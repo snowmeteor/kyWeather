@@ -6,8 +6,8 @@
 
 ```
 // 查询城市
-Double longitude = 116.41;// 经度
-Double latitude = 39.9316;// 纬度
+double longitude = 116.41;// 经度
+double latitude = 39.9316;// 纬度
 
 System.out.println(ChinaCityFinder.getLocationId(longitude, latitude));
 System.out.println(ChinaCityFinder.getCity(longitude, latitude));
