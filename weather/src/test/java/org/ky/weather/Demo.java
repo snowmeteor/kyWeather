@@ -14,11 +14,11 @@ public class Demo {
 		double t1 = System.currentTimeMillis();
 		System.out.println(WeatherSearcher.getWeatherFromAPI(longitude, latitude));
 		double t2 = System.currentTimeMillis();
-		System.out.println("查询时间：" + (t2 - t1));
-		
+		System.out.println("查询时间：" + (t2 - t1) / 1.0 + "s");
+
 		System.out.println(WeatherSearcher.getWeatherFromHtml(longitude, latitude));
 		double t3 = System.currentTimeMillis();
-		System.out.println("查询时间：" + (t3 - t2));
+		System.out.println("查询时间：" + (t3 - t2) / 1.0 + "s");
 	}
 
 }
