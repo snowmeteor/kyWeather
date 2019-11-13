@@ -6,9 +6,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -203,11 +205,15 @@ public final class ChinaCityFinder {
 	}
 
 	private static List<City> cities = null;
+	private static Map<String, City> cityMap = new HashMap<>();
 
 	static {
 		Gson gson = new Gson();
 		cities = gson.fromJson(cityArrayJson, new TypeToken<List<City>>() {
 		}.getType());
+		for (City city : cities) {
+			cityMap.put(city.getId(), city);
+		}
 	}
 
 	public static List<City> getChinaCites() {
@@ -357,7 +363,7 @@ public final class ChinaCityFinder {
 	 * @param latitude
 	 * @return
 	 */
-	public static int getLocationId(Double longitude, Double latitude) {
+	public static int getLocationId(double longitude, double latitude) {
 		double[] f = { longitude, latitude };
 		Point p = new Point(f);
 		double min_dis = Double.MAX_VALUE;
@@ -372,13 +378,8 @@ public final class ChinaCityFinder {
 	 * @param latitude
 	 * @return
 	 */
-	public static City getCity(Double longitude, Double latitude) {
+	public static City getCity(double longitude, double latitude) {
 		String id = getLocationId(longitude, latitude) + "";
-		for (City city : cities) {
-			if (city.getId().equals(id)) {
-				return city;
-			}
-		}
-		return null;
+		return cityMap.get(id);
 	}
 }

@@ -2,6 +2,7 @@ package org.ky.weather;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -27,7 +28,7 @@ public final class WeatherSearcher {
 	public static final String URL_ZS = "http://weather.com.cn/data/zs/%d.html";// 详细指数
 
 	/**
-	 * 通过经纬度及中国天气网不公开API查询天气，信息比较完整
+	 * 通过经纬度及中国天气网不公开API查询天气，信息比较完整，速度较快
 	 *
 	 * @param longitude
 	 * @param latitude
@@ -54,37 +55,77 @@ public final class WeatherSearcher {
 			cityId = 101010100;
 		}
 
+		final int cid = cityId;
+
 		Weather weather = new Weather();
 		Gson gson = new Gson();
 		try {
 
-			String url = String.format(URL_CITYINFO, cityId);
-			Document doc = Jsoup.connect(url).timeout(4000).get();
+			CountDownLatch latch = new CountDownLatch(3);
 
-			Map<String, Object> mainMap = gson.fromJson(doc.text(), Map.class);
-			Map<String, Object> map = (Map<String, Object>) MapUtils.getMap(mainMap, "weatherinfo");
+			Thread t1 = new Thread(new Runnable() {
 
-			weather.setCityName(MapUtils.getString(map, "city"));
-			weather.setMinTemp(MapUtils.getString(map, "temp1"));
-			weather.setMaxTemp(MapUtils.getString(map, "temp2"));
-			weather.setDescription(MapUtils.getString(map, "weather"));
+				@Override
+				public void run() {
+					try {
+						String url = String.format(URL_CITYINFO, cid);
+						Document doc = Jsoup.connect(url).timeout(4000).get();
+						Map<String, Object> mainMap = gson.fromJson(doc.text(), Map.class);
+						Map<String, Object> map = (Map<String, Object>) MapUtils.getMap(mainMap, "weatherinfo");
+						weather.setCityName(MapUtils.getString(map, "city"));
+						weather.setMinTemp(MapUtils.getString(map, "temp1"));
+						weather.setMaxTemp(MapUtils.getString(map, "temp2"));
+						weather.setDescription(MapUtils.getString(map, "weather"));
 
-			url = String.format(URL_ZS, cityId);
-			doc = Jsoup.connect(url).timeout(4000).get();
-			mainMap = gson.fromJson(doc.text(), Map.class);
-			map = (Map<String, Object>) MapUtils.getMap(mainMap, "zs");
-			weather.setSportsHint(MapUtils.getString(map, "yd_hint"));
-			weather.setSportsSuggestion(MapUtils.getString(map, "yd_des"));
+						latch.countDown();
+					} catch (Exception e) {
+					}
+				}
+			});
+			Thread t2 = new Thread(new Runnable() {
 
-			url = String.format(URL_SK, cityId);
-			doc = Jsoup.connect(url).timeout(4000).get();
-			mainMap = gson.fromJson(doc.text(), Map.class);
-			map = (Map<String, Object>) MapUtils.getMap(mainMap, "weatherinfo");
-			weather.setCurrentTemp(MapUtils.getString(map, "temp"));
-			weather.setWindDirection(MapUtils.getString(map, "WD"));
-			weather.setWindPower(MapUtils.getString(map, "WS"));
-			weather.setHumidity(MapUtils.getString(map, "SD"));
-		} catch (IOException e) {
+				@Override
+				public void run() {
+					try {
+						String url = String.format(URL_ZS, cid);
+						Document doc = Jsoup.connect(url).timeout(4000).get();
+						Map<String, Object> mainMap = gson.fromJson(doc.text(), Map.class);
+						Map<String, Object> map = (Map<String, Object>) MapUtils.getMap(mainMap, "zs");
+						weather.setSportsHint(MapUtils.getString(map, "yd_hint"));
+						weather.setSportsSuggestion(MapUtils.getString(map, "yd_des"));
+
+						latch.countDown();
+					} catch (Exception e) {
+					}
+				}
+			});
+			Thread t3 = new Thread(new Runnable() {
+
+				@Override
+				public void run() {
+					try {
+						String url = String.format(URL_SK, cid);
+						Document doc = Jsoup.connect(url).timeout(4000).get();
+						Map<String, Object> mainMap = gson.fromJson(doc.text(), Map.class);
+						Map<String, Object> map = (Map<String, Object>) MapUtils.getMap(mainMap, "weatherinfo");
+						weather.setCurrentTemp(MapUtils.getString(map, "temp"));
+						weather.setWindDirection(MapUtils.getString(map, "WD"));
+						weather.setWindPower(MapUtils.getString(map, "WS"));
+						weather.setHumidity(MapUtils.getString(map, "SD"));
+
+						latch.countDown();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			});
+
+			t1.start();
+			t2.start();
+			t3.start();
+
+			latch.await();
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
@@ -93,7 +134,7 @@ public final class WeatherSearcher {
 	}
 
 	/**
-	 * 通过经纬度从中国天气网网页解析网页元素获取天气，信息比较简略
+	 * 通过经纬度从中国天气网网页解析网页元素获取天气，信息比较简略，速度较慢
 	 * 
 	 * @param longitude
 	 * @param latitude
